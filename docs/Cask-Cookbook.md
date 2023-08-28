@@ -118,7 +118,6 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
     language
 
     url
-    appcast
     name
     desc
     homepage
@@ -141,6 +140,7 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
     font
     input_method
     internet_plugin
+    keyboard_layout
     prefpane
     qlplugin
     mdimporter
@@ -190,25 +190,26 @@ Each cask must declare one or more *artifacts* (i.e. something to install).
 | name                             | multiple occurrences allowed? | value |
 | -------------------------------- | :---------------------------: | ----- |
 | [`app`](#stanza-app)             | yes                           | Relative path to an `.app` that should be moved into the `/Applications` folder on installation.
+| [`suite`](#stanza-suite)         | yes                           | Relative path to a containing directory that should be moved into the `/Applications` folder on installation.
 | [`pkg`](#stanza-pkg)             | yes                           | Relative path to a `.pkg` file containing the distribution.
+| [`installer`](#stanza-installer) | yes                           | Describes an executable which must be run to complete the installation.
 | [`binary`](#stanza-binary)       | yes                           | Relative path to a Binary that should be linked into the `$(brew --prefix)/bin` folder on installation.
+| `manpage`                        | yes                           | Relative path to a Man Page that should be linked into the respective man page folder on installation, e.g. `/usr/local/share/man/man3` for `my_app.3`.
 | `colorpicker`                    | yes                           | Relative path to a ColorPicker plugin that should be moved into the `~/Library/ColorPickers` folder on installation.
 | `dictionary`                     | yes                           | Relative path to a Dictionary that should be moved into the `~/Library/Dictionaries` folder on installation.
 | `font`                           | yes                           | Relative path to a Font that should be moved into the `~/Library/Fonts` folder on installation.
-| `input_method`                   | yes                           | Relative path to a Input Method that should be moved into the `~/Library/Input Methods` folder on installation.
-| `internet_plugin`                | yes                           | Relative path to a Service that should be moved into the `~/Library/Internet Plug-Ins` folder on installation.
-| `manpage`                        | yes                           | Relative path to a Man Page that should be linked into the respective man page folder on installation, e.g. `/usr/local/share/man/man3` for `my_app.3`.
+| `input_method`                   | yes                           | Relative path to an Input Method that should be moved into the `~/Library/Input Methods` folder on installation.
+| `internet_plugin`                | yes                           | Relative path to an Internet Plugin that should be moved into the `~/Library/Internet Plug-Ins` folder on installation.
+| `keyboard_layout`                | yes                           | Relative path to a Keyboard Layout that should be moved into the `/Library/Keyboard Layouts` folder on installation.
 | `prefpane`                       | yes                           | Relative path to a Preference Pane that should be moved into the `~/Library/PreferencePanes` folder on installation.
 | `qlplugin`                       | yes                           | Relative path to a QuickLook Plugin that should be moved into the `~/Library/QuickLook` folder on installation.
-| `mdimporter`                     | yes                           | Relative path to a Spotlight metadata importer that should be moved into the `~/Library/Spotlight` folder on installation.
+| `mdimporter`                     | yes                           | Relative path to a Spotlight Metadata Importer that should be moved into the `~/Library/Spotlight` folder on installation.
 | `screen_saver`                   | yes                           | Relative path to a Screen Saver that should be moved into the `~/Library/Screen Savers` folder on installation.
 | `service`                        | yes                           | Relative path to a Service that should be moved into the `~/Library/Services` folder on installation.
-| `audio_unit_plugin`              | yes                           | Relative path to an Audio Unit plugin that should be moved into the `~/Library/Audio/Components` folder on installation.
+| `audio_unit_plugin`              | yes                           | Relative path to an Audio Unit Plugin that should be moved into the `~/Library/Audio/Components` folder on installation.
 | `vst_plugin`                     | yes                           | Relative path to a VST Plugin that should be moved into the `~/Library/Audio/VST` folder on installation.
 | `vst3_plugin`                    | yes                           | Relative path to a VST3 Plugin that should be moved into the `~/Library/Audio/VST3` folder on installation.
-| [`suite`](#stanza-suite)         | yes                           | Relative path to a containing directory that should be moved into the `/Applications` folder on installation.
-| `artifact`                       | yes                           | Relative path to an arbitrary path that should be moved on installation. Must provide an absolute path as a `target`. (Example: [free-gpgmail.rb](https://github.com/Homebrew/homebrew-cask/blob/8bc2da7270292f899b9819972cf2ee647b8c6a3e/Casks/free-gpgmail.rb#L39)) This is only for unusual cases; the `app` stanza is strongly preferred when moving `.app` bundles.
-| [`installer`](#stanza-installer) | yes                           | Describes an executable which must be run to complete the installation.
+| `artifact`                       | yes                           | Relative path to an arbitrary path that should be moved on installation. Must provide an absolute path as a `target`. (Example: [free-gpgmail.rb](https://github.com/Homebrew/homebrew-cask/blob/b3c438d608d9702380edf10d5495e0727cf17108/Casks/f/free-gpgmail.rb#L44)) This is only for unusual cases; the `app` stanza is strongly preferred when moving `.app` bundles.
 | `stage_only`                     | no                            | `true`. Asserts that the cask contains no activatable artifacts.
 
 ### Optional Stanzas
@@ -217,18 +218,17 @@ Each cask must declare one or more *artifacts* (i.e. something to install).
 | ------------------------------------------ | :---------------------------: | ----- |
 | [`uninstall`](#stanza-uninstall)           | yes                           | Procedures to uninstall a cask. Optional unless the `pkg` stanza is used.
 | [`zap`](#stanza-zap)                       | yes                           | Additional procedures for a more complete uninstall, including user files and shared resources.
-| [`appcast`](#stanza-appcast)               | no                            | URL providing an appcast feed to find updates for this cask.
 | [`depends_on`](#stanza-depends_on)         | yes                           | List of dependencies and requirements for this cask.
 | [`conflicts_with`](#stanza-conflicts_with) | yes                           | List of conflicts with this cask (*not yet functional*).
 | [`caveats`](#stanza-caveats)               | yes                           | String or Ruby block providing the user with cask-specific information at install time.
-| [`livecheck`](#stanza-livecheck)           | no                            | Ruby block describing how to find updates for this cask.
+| [`livecheck`](#stanza-livecheck)           | no                            | Ruby block describing how to find updates for this cask. Supersedes `appcast`.
 | `preflight`                                | yes                           | Ruby block containing preflight install operations (needed only in very rare cases).
 | [`postflight`](#stanza-flight)             | yes                           | Ruby block containing postflight install operations.
 | `uninstall_preflight`                      | yes                           | Ruby block containing preflight uninstall operations (needed only in very rare cases).
 | `uninstall_postflight`                     | yes                           | Ruby block containing postflight uninstall operations.
 | [`language`](#stanza-language)             | required                      | Ruby block, called with language code parameters, containing other stanzas and/or a return value.
 | `container nested:`                        | no                            | Relative path to an inner container that must be extracted before moving on with the installation. This allows for support of `.dmg` inside `.tar`, `.zip` inside `.dmg`, etc.
-| `container type:`                          | no                            | Symbol to override container-type autodetect. May be one of: `:air`, `:bz2`, `:cab`, `:dmg`, `:generic_unar`, `:gzip`, `:otf`, `:pkg`, `:rar`, `:seven_zip`, `:sit`, `:tar`, `:ttf`, `:xar`, `:zip`, `:naked`. (Example: [parse.rb](https://github.com/Homebrew/homebrew-cask/blob/0a8004efb40e29510d47d932ab551885cee2aad7/Casks/parse.rb#L10))
+| `container type:`                          | no                            | Symbol to override container-type autodetect. May be one of: `:air`, `:bz2`, `:cab`, `:dmg`, `:generic_unar`, `:gzip`, `:otf`, `:pkg`, `:rar`, `:seven_zip`, `:sit`, `:tar`, `:ttf`, `:xar`, `:zip`, `:naked`. (Example: [parse.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/p/parse.rb#L10))
 | `auto_updates`                             | no                            | `true`. Asserts that the cask artifacts auto-update. Use if `Check for Updates…` or similar is present in an app menu, but not if it only opens a webpage and does not do the download and installation for you.
 
 ## Stanza descriptions
@@ -249,7 +249,7 @@ by default moves the source to:
 
 #### Renaming the Target
 
-You can rename the target which appears in your `/Applications` directory by adding a `target:` key to `app`. Example (from [scala-ide.rb](https://github.com/Homebrew/homebrew-cask/blob/1fed44e89a8896f27e2b69a5789a3cd916d7abe5/Casks/scala-ide.rb#L24)):
+You can rename the target which appears in your `/Applications` directory by adding a `target:` key to `app`. Example (from [scala-ide.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/s/scala-ide.rb#L24)):
 
 ```ruby
 app "eclipse.app", target: "Scala IDE.app"
@@ -257,7 +257,7 @@ app "eclipse.app", target: "Scala IDE.app"
 
 #### *target* May Contain an Absolute Path
 
-If `target:` has a leading slash, it is interpreted as an absolute path. The containing directory for the absolute path will be created if it does not already exist. Example (from [sapmachine-jdk.rb](https://github.com/Homebrew/homebrew-cask/blob/75a34b96e4e2af70e1ffc0d6ba64ea7c306b79a3/Casks/sapmachine-jdk.rb#L21)):
+If `target:` has a leading slash, it is interpreted as an absolute path. The containing directory for the absolute path will be created if it does not already exist. Example (from [sapmachine-jdk.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/s/sapmachine-jdk.rb#L21)):
 
 ```ruby
 artifact "sapmachine-jdk-#{version}.jdk", target: "/Library/Java/JavaVirtualMachines/sapmachine-jdk-#{version}.jdk"
@@ -265,51 +265,15 @@ artifact "sapmachine-jdk-#{version}.jdk", target: "/Library/Java/JavaVirtualMach
 
 #### *target* Works on Most Artifact Types
 
-The `target:` key works similarly for most cask artifacts, such as `app`, `binary`, `colorpicker`, `dictionary`, `font`, `input_method`, `prefpane`, `qlplugin`, `mdimporter`, `service`, `suite`, and `artifact`.
+The `target:` key works similarly for most cask artifacts, such as `app`, `binary`, `colorpicker`, `dictionary`, `font`, `input_method`, `internet_plugin`, `keyboard_layout`, `prefpane`, `qlplugin`, `mdimporter`, `screen_saver`, `service`, `suite`, `audio_unit_plugin`, `vst_plugin`, `vst3_plugin`, and `artifact`.
 
 #### *target* Should Only Be Used in Select Cases
 
-Don’t use `target:` for aesthetic reasons, like removing version numbers (`app "Slack #{version}.app", target: "Slack.app"`). Use it when it makes sense functionally and document your reason clearly in the cask, using one of the templates: [for clarity](https://github.com/Homebrew/homebrew-cask/blob/0661430a4b0143671459260e5c8affc2f8e50413/Casks/imagemin.rb#L10); [for consistency](https://github.com/Homebrew/homebrew-cask/blob/8be96e3658ff7ab66ca40723c3018fc5e35e3735/Casks/x-moto.rb#L16); [to prevent conflicts](https://github.com/Homebrew/homebrew-cask/blob/f34503e7b5f5d018a65f4c726e1c57e15b8111ae/Casks/telegram-desktop.rb#L20); [due to developer suggestion](https://github.com/Homebrew/homebrew-cask/blob/ff3e9c4a6623af44b8a071027e8dcf3f4edfc6d9/Casks/kivy.rb#L12).
-
-### Stanza: `appcast`
-
-The value of the `appcast` stanza is a string, holding the URL for an appcast which provides information on future updates.
-
-**Note:** The [`livecheck` stanza](#stanza-livecheck) is usually preferred, as it allows casks to be updated automatically.
-
-The main [homebrew/cask](https://github.com/Homebrew/homebrew-cask) repository only accepts submissions for stable versions of software (and [documented exceptions](https://docs.brew.sh/Acceptable-Casks#but-there-is-no-stable-version)), but it still gets pull requests for unstable versions. By checking the submitted `version` against the contents of an appcast, we can better detect these invalid cases.
-
-There are a few different ways the `appcast` can be determined:
-
-* If the app is distributed via GitHub releases, the `appcast` will be of the form `https://github.com/<user>/<project_name>/releases.atom`. Example: [electron.rb](https://github.com/Homebrew/homebrew-cask/blob/645dbb8228ec2f1f217ed1431e188687aac13ca5/Casks/electron.rb#L7)
-
-* If the app is distributed via GitLab releases, the `appcast` will be of the form `https://gitlab.com/<user>/<project_name>/-/tags?format=atom`. Example: [grafx.rb](https://github.com/Homebrew/homebrew-cask/blob/b22381902f9da870bb07d21b496558f283dad612/Casks/grafx.rb#L6)
-
-* The popular update framework [Sparkle](https://sparkle-project.org/) generally uses the `SUFeedURL` property in `Contents/Info.plist` inside `.app` bundles. Example: [fstream.rb](https://github.com/Homebrew/homebrew-cask/blob/519999d874792f3ad7cc0fffd0520a8fdf468880/Casks/fstream.rb#L6)
-
-* SourceForge projects follow the form `https://sourceforge.net/projects/<project_name>/rss`. A more specific page can be used as needed, pointing to a specific directory structure: `https://sourceforge.net/projects/<project_name>/rss?path=/path/here`. Example: [displaycal.rb](https://github.com/Homebrew/homebrew-cask/blob/347dc92405889488ea72c47f7d50b1afaf348909/Casks/displaycal.rb#L7)
-
-* An appcast can be any URL hosted by the app’s developer that changes every time a new release is out or that contains the version number of the current release (e.g. a download HTML page). Webpages that only change on new version releases are preferred, as are sites that do not contain previous version strings (i.e. avoid changelog pages if the download page contains the current version number but not older ones). Example: [securityspy.rb](https://github.com/Homebrew/homebrew-cask/blob/e3495e32b7fb3ed1929b6082a4e3eb6a94d9494f/Casks/securityspy.rb#L6)
-
-The [`find-appcast`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/developer/bin/find-appcast) script is able to identify some of these, as well as `electron-builder` appcasts which are trickier to find by hand. Run it with:
-
-```bash
-"$(brew --repository homebrew/cask)/developer/bin/find-appcast" '/path/to/application.app'
-```
-
-#### `appcast` Parameters
-
-| key             | value       |
-| --------------- | ----------- |
-| `must_contain:` | Custom string for `brew audit --appcast <cask>` to check against. (Example: [icollections.rb](https://github.com/Homebrew/homebrew-cask/blob/705ed8ddc23a0e7719348dfb278046f031495938/Casks/icollections.rb#L6-L7))
-
-Sometimes a `version` doesn’t match a string on the webpage, in which case we tweak what to search for. For example, if `version` is `6.26.1440` and the appcast’s contents only show `6.24`, the check for “is `version` in the appcast feed” will fail. With `must_contain`, the check is told to “look for this string instead of `version`”. In the example, `must_contain: version.major_minor` is saying “look for `6.24`”, making the check succeed.
-
-If no `must_contain` is given, the check considers from the beginning of the `version` string until the first character that isn’t alphanumeric or a period. For example, if `version` is `6.26b-14,40`, the check will look for `6.26b`. This is so it covers most cases by default, while still allowing complex `version`s suitable for interpolation in the rest of the cask.
+Don’t use `target:` for aesthetic reasons, like removing version numbers (`app "Slack #{version}.app", target: "Slack.app"`). Use it when it makes sense functionally and document your reason clearly in the cask, using one of the templates: [for clarity](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/i/imagemin.rb#L10); [for consistency](https://github.com/Homebrew/homebrew-cask/blob/8be96e3658ff7ab66ca40723c3018fc5e35e3735/Casks/x-moto.rb#L16); [to prevent conflicts](https://github.com/Homebrew/homebrew-cask/blob/4472df441468e2aa657005550e2b951c2ef817f4/Casks/t/telegram-desktop.rb#L20); [due to developer suggestion](https://github.com/Homebrew/homebrew-cask/blob/ff3e9c4a6623af44b8a071027e8dcf3f4edfc6d9/Casks/kivy.rb#L12).
 
 ### Stanza: `binary`
 
-In the simple case of a string argument to `binary`, the source file is linked into the `$(brew --prefix)/bin` directory on installation. For example (from [operadriver.rb](https://github.com/Homebrew/homebrew-cask/blob/8145c76101534aabcfc419488578455e636d6330/Casks/operadriver.rb#L15)):
+In the simple case of a string argument to `binary`, the source file is linked into the `$(brew --prefix)/bin` directory on installation. For example (from [operadriver.rb](https://github.com/Homebrew/homebrew-cask/blob/326c44e93aeb8d4dd73acea14a99ae215c75fdd6/Casks/o/operadriver.rb#L15)):
 
 ```ruby
 binary "operadriver_mac64/operadriver"
@@ -340,7 +304,7 @@ You can rename the target which appears in your binaries directory by adding a `
 binary "#{appdir}/Atom.app/Contents/Resources/app/atom.sh", target: "atom"
 ```
 
-Behaviour and usage of `target:` is [the same as with `app`](#renaming-the-target). However, for `binary` the select cases don’t apply as rigidly. It’s fine to take extra liberties with `target:` to be consistent with other command-line tools, like [changing case](https://github.com/Homebrew/homebrew-cask/blob/36c6305caf2e9d543192632165c9c722b3f1451d/Casks/godot.rb#L17), [removing an extension](https://github.com/Homebrew/homebrew-cask/blob/e607b7e27f90316df5213fc9061f7dfa608e7f84/Casks/filebot.rb#L19), or [cleaning up the name](https://github.com/Homebrew/homebrew-cask/blob/7c72a90cb38ea2082688ceab0615dd866d833e7f/Casks/fig.rb#L21).
+Behaviour and usage of `target:` is [the same as with `app`](#renaming-the-target). However, for `binary` the select cases don’t apply as rigidly. It’s fine to take extra liberties with `target:` to be consistent with other command-line tools, like [changing case](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/g/godot.rb#L19), [removing an extension](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/f/filebot.rb#L19), or [cleaning up the name](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/f/fig.rb#L21).
 
 ### Stanza: `caveats`
 
@@ -386,8 +350,8 @@ The following methods may be called to generate standard warning messages:
 | `reboot`                           | Users should reboot to complete installation.
 | `files_in_usr_local`               | The cask installs files to `/usr/local`, which may confuse Homebrew.
 | `discontinued`                     | All software development has been officially discontinued upstream.
-| `kext`                             | Users may need to enable their kexts in *System Preferences → Security & Privacy → General*.
-| `unsigned_accessibility`           | Users will need to re-enable the app on each update in *System Preferences → Security & Privacy → Privacy* as it is unsigned.
+| `kext`                             | Users may need to enable their kexts in *System Settings → Privacy & Security* (or *System Preferences → Security & Privacy → General* in earlier macOS versions).
+| `unsigned_accessibility`           | Users will need to re-enable the app on each update in *System Settings → Privacy & Security* (or *System Preferences → Security & Privacy → Privacy* in earlier macOS versions) as it is unsigned.
 | `license "web_page"`               | Users may find the software's usage license at `web_page`.
 | `free_license "web_page"`          | Users may obtain an official license to use the software at `web_page`.
 
@@ -407,10 +371,10 @@ end
 
 The value should be another cask token.
 
-Example: [Wireshark](https://github.com/Homebrew/homebrew-cask/blob/01ae340fd7f449e222d4b2dec1186edf9278cdfb/Casks/wireshark.rb#L20), which conflicts with `wireshark-chmodbpf`.
+Example: the [macFUSE](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/m/macfuse.rb#L17) cask, which conflicts with `macfuse-dev`.
 
 ```ruby
-conflicts_with cask: "wireshark-chmodbpf"
+conflicts_with cask: "macfuse-dev"
 ```
 
 #### `conflicts_with` *formula*
@@ -419,7 +383,7 @@ conflicts_with cask: "wireshark-chmodbpf"
 
 The value should be another formula name.
 
-Example: [MacVim](https://github.com/Homebrew/homebrew-cask/blob/7ed1a049e23196358f2ed1e6a57412cc479aceb8/Casks/macvim.rb#L16), which conflicts with the `macvim` formula.
+Example: [MacVim](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/m/macvim.rb#L16), which conflicts with the `macvim` formula.
 
 ```ruby
 conflicts_with formula: "macvim"
@@ -433,7 +397,7 @@ conflicts_with formula: "macvim"
 
 The value should be another cask token, needed by the current cask.
 
-Example: [NTFSTool](https://github.com/Homebrew/homebrew-cask/blob/b7ac7fca6538f6c8a36a8128d76cfceadfb8b653/Casks/ntfstool.rb#L11), which depends on macFUSE.
+Example: [NTFSTool](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/n/ntfstool.rb#L11), which depends on macFUSE.
 
 ```ruby
 depends_on cask: "macfuse"
@@ -599,10 +563,10 @@ The following methods may be called to perform standard tasks:
 
 | method                                    | availability                                     | description |
 | ----------------------------------------- | ------------------------------------------------ | ----------- |
-| `set_ownership(paths)`                    | `preflight`, `postflight`, `uninstall_preflight` | Set user and group ownership of `paths`. (Example: [docker-toolbox.rb](https://github.com/Homebrew/homebrew-cask/blob/9cd40bb37d6e7977340c6396c3574ceb1164a6be/Casks/docker-toolbox.rb#L42))
-| `set_permissions(paths, permissions_str)` | `preflight`, `postflight`, `uninstall_preflight` | Set permissions in `paths` to `permissions_str`. (Example: [ngrok.rb](https://github.com/Homebrew/homebrew-cask/blob/3d5e870b1a5324a138a01ffbd3b60f4cad9630b7/Casks/ngrok.rb#L30))
+| `set_ownership(paths)`                    | `preflight`, `postflight`, `uninstall_preflight` | Set user and group ownership of `paths`. (Example: [docker-toolbox.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/d/docker-toolbox.rb#L42))
+| `set_permissions(paths, permissions_str)` | `preflight`, `postflight`, `uninstall_preflight` | Set permissions in `paths` to `permissions_str`. (Example: [ngrok.rb](https://github.com/Homebrew/homebrew-cask/blob/41d91ff669d85343175202adf568e2328486205f/Casks/n/ngrok.rb#L30))
 
-`set_ownership(paths)` defaults user ownership to the current user and group ownership to `staff`. These can be changed by passing in extra options: `set_ownership(paths, user: "user", group: "group")`. (Example: [wsjtx.rb](https://github.com/Homebrew/homebrew-cask/blob/2648e02fc0c0db1bd47fe931b8bfd2eeef16b71a/Casks/wsjtx.rb#L21))
+`set_ownership(paths)` defaults user ownership to the current user and group ownership to `staff`. These can be changed by passing in extra options: `set_ownership(paths, user: "user", group: "group")`. (Example: [hummingbird.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/h/hummingbird.rb#L24))
 
 ### Stanza: `installer`
 
@@ -612,10 +576,10 @@ The `installer` stanza takes a series of key-value pairs, the first key of which
 
 #### `installer` *manual*
 
-`installer manual:` takes a single string value, describing a GUI installer which must be run by the user at a later time. The path may be absolute, or relative to the cask. Example (from [nutstore.rb](https://github.com/Homebrew/homebrew-cask/blob/2820a91fd156f9cfcf16121d885bf5d6b572ed46/Casks/nutstore.rb#L18)):
+`installer manual:` takes a single string value, describing a GUI installer which must be run by the user at a later time. The path may be absolute, or relative to the cask. Example (from [rubymotion.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/r/rubymotion.rb#L15)):
 
 ```ruby
-installer manual: "Nutstore Installer.app"
+installer manual: "RubyMotion Installer.app"
 ```
 
 #### `installer` *script*
@@ -630,7 +594,7 @@ installer manual: "Nutstore Installer.app"
 | `must_succeed:` | set to `false` if the script is allowed to fail
 | `sudo:`         | set to `true` if the script needs *sudo*
 
-The path may be absolute, or relative to the cask. Example (from [miniforge.rb](https://github.com/Homebrew/homebrew-cask/blob/8bcb2763b1646c0059b5db4cd14cae2fd7fb2621/Casks/miniforge.rb#L23-L26)):
+The path may be absolute, or relative to the cask. Example (from [miniforge.rb](https://github.com/Homebrew/homebrew-cask/blob/864f623e2cd17dbde5987a7b3923fdb0b4ac9ee5/Casks/m/miniforge.rb#L23-L26)):
 
 ```ruby
 installer script: {
@@ -647,7 +611,7 @@ installer script: "#{staged_path}/install.sh"
 
 ### Stanza: `language`
 
-The `language` stanza can match [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) language codes, regional identifiers ([ISO 3166-1 Alpha 2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)) and script codes ([ISO 15924](https://en.wikipedia.org/wiki/ISO_15924)), or a combination thereof.
+The `language` stanza can match [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) language codes, script codes ([ISO 15924](https://en.wikipedia.org/wiki/ISO_15924)) and regional identifiers ([ISO 3166-1 Alpha 2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)), or a combination thereof.
 
 US English should always be used as the default language:
 
@@ -687,7 +651,7 @@ The return value of the matching `language` block can be accessed by simply call
 homepage "https://example.org/#{language}"
 ```
 
-Examples: [firefox.rb](https://github.com/Homebrew/homebrew-cask/blob/b0053f9715d37659265ddb4cf3c485425bcb6756/Casks/firefox.rb#L4-L210), [battle-net.rb](https://github.com/Homebrew/homebrew-cask/blob/c939e584fc71e41d08904a95cc5e35d0d48a0544/Casks/battle-net.rb#L5-L10)
+Examples: [firefox.rb](https://github.com/Homebrew/homebrew-cask/blob/939b4331dc2a6860350d66a1b2c7b3f22442cc08/Casks/f/firefox.rb#L4-L207), [battle-net.rb](https://github.com/Homebrew/homebrew-cask/blob/e039d079560cf2f77b671f7dda4752a053341180/Casks/b/battle-net.rb#L5-L10)
 
 #### Installation
 
@@ -699,7 +663,7 @@ brew install firefox --language=it
 
 ### Stanza: `livecheck`
 
-The `livecheck` stanza is used to automatically fetch the latest version of a cask from changelogs, release notes, appcasts, etc. See also: [`brew livecheck` reference](Brew-Livecheck.md)
+The `livecheck` stanza is used to automatically fetch the latest version of a cask from changelogs, release notes, appcasts, etc. Since the main [homebrew/cask](https://github.com/Homebrew/homebrew-cask) repository only accepts submissions for stable versions of software (and [documented exceptions](https://docs.brew.sh/Acceptable-Casks#but-there-is-no-stable-version)), this allows for verifying that the submitted version is the latest, and alerting when a newer version is available using [`brew livecheck`](Brew-Livecheck.md).
 
 Every `livecheck` block must contain a `url`, which can be either a string or a symbol pointing to other URLs in the cask (`:url` or `:homepage`).
 
@@ -732,7 +696,7 @@ livecheck do
 end
 ```
 
-The `header_match` strategy will try to parse a version from the filename (in the `Content-Disposition` header) and the final URL (in the `Location` header). If that doesn't work, a `regex` can be specified, e.g.:
+The `:header_match` strategy will try to parse a version from the filename (in the `Content-Disposition` header) and the final URL (in the `Location` header). If that doesn't work, a `regex` can be specified, e.g.:
 
 ```ruby
 strategy :header_match
@@ -762,15 +726,30 @@ strategy :page_match do |page|
 end
 ```
 
+The `:sparkle` strategy takes a URL for an XML feed providing release information to an app that self-updates using the Sparkle framework. This URL can be found within the app bundle as the `SUFeedURL` property in `Contents/Info.plist` or by using the [`find-appcast`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/developer/bin/find-appcast) script. Run it with:
+
+```bash
+"$(brew --repository homebrew/cask)/developer/bin/find-appcast" '/path/to/application.app'
+```
+
+Both the `sparkle:version` and `sparkle:shortVersionString` attributes are checked by default; if only one is needed, specify `&:version` or `&:short_version`:
+
+```ruby
+url "https://manytricks.com/butler/appcast/"
+strategy :sparkle, &:short_version
+```
+
+If no means are available online for checking which version is current, as a last resort the `:extract_plist` strategy will have `brew livecheck` download the artifact and retrieve its version string from `Contents/Info.plist`.
+
 ### Stanza: `name`
 
 `name` accepts a UTF-8 string defining the name of the software, including capitalization and punctuation. It is used to help with searchability and disambiguation.
 
-Unlike the [token](#token-reference), which is simplified and reduced to a limited set of characters, the `name` stanza can include the proper capitalization, spacing and punctuation to match the official name of the software. For disambiguation purposes, it is recommended to spell out the name of the application, including the vendor name if necessary. A good example is the [`pycharm-ce`](https://github.com/Homebrew/homebrew-cask/blob/cf92ff397b6c6cb7480cd15690b48ab0ce654dfc/Casks/pycharm-ce.rb#L9-L10) cask, whose name is spelled out as `Jetbrains PyCharm Community Edition`, even though it is likely never referenced as such anywhere.
+Unlike the [token](#token-reference), which is simplified and reduced to a limited set of characters, the `name` stanza can include the proper capitalization, spacing and punctuation to match the official name of the software. For disambiguation purposes, it is recommended to spell out the name of the application, including the vendor name if necessary. A good example is the [`pycharm-ce`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/p/pycharm-ce.rb#L9-L10) cask, whose name is spelled out as `Jetbrains PyCharm Community Edition`, even though it is likely never referenced as such anywhere.
 
 Additional details about the software can be provided in the [`desc` stanza](#stanza-desc).
 
-The `name` stanza can be repeated multiple times if there are useful alternative names. The first instance should use the Latin alphabet. For example, see the [`cave-story`](https://github.com/Homebrew/homebrew-cask/blob/6b07917a10dc34c4a2f784df9c17b9c68cdfc0ed/Casks/cave-story.rb#L48-L50) cask, whose original name does not use the Latin alphabet.
+The `name` stanza can be repeated multiple times if there are useful alternative names. The first instance should use the Latin alphabet. For example, see the [`cave-story`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/c/cave-story.rb#L58-L60) cask, whose original name does not use the Latin alphabet.
 
 ### Stanza: `pkg`
 
@@ -790,7 +769,7 @@ Subsequent arguments to `pkg` are key/value pairs which modify the install proce
 
 This option is not permitted in official Homebrew Cask taps; it is only provided for use in third-party taps or local casks.
 
-Example (from [alinof-timer.rb](https://github.com/Homebrew/homebrew-cask/blob/312ae841f1f1b2ec07f4d88b7dfdd7fbdf8d4f94/Casks/alinof-timer.rb#L10)):
+Historical example (from [alinof-timer.rb](https://github.com/Homebrew/homebrew-cask/blob/312ae841f1f1b2ec07f4d88b7dfdd7fbdf8d4f94/Casks/alinof-timer.rb#L10)):
 
 ```ruby
 pkg "AlinofTimer.pkg", allow_untrusted: true
@@ -810,7 +789,7 @@ will output XML that you can use to extract the `choices:` values, as well as th
 
 See [this pull request for wireshark-chmodbpf](https://github.com/Homebrew/homebrew-cask/pull/26997) and [this one for wine-staging](https://github.com/Homebrew/homebrew-cask/pull/27937) for some examples of the procedure.
 
-Example (from [lando.rb](https://github.com/Homebrew/homebrew-cask/blob/e35c4ac349c21262b460535c57a8f37e7fe6de27/Casks/lando.rb#L21-L33)):
+Example (from [lando.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/l/lando.rb#L21-L33)):
 
 ```ruby
 pkg "LandoInstaller.pkg",
@@ -828,10 +807,10 @@ pkg "LandoInstaller.pkg",
     ]
 ```
 
-Example (from [microsoft-office.rb](https://github.com/Homebrew/homebrew-cask/blob/7d0fb4a6527c1836bf326dce8dff9966be8e7da0/Casks/microsoft-office.rb#L27-L34)):
+Example (from [microsoft-office.rb](https://github.com/Homebrew/homebrew-cask/blob/56cabc6cec8be8f8a2fd06bc0b88f851d3b075d7/Casks/m/microsoft-office.rb#L30-L37)):
 
 ```ruby
-pkg "Microsoft_Office_#{version}_Installer.pkg",
+pkg "Microsoft_365_and_Office_#{version}_Installer.pkg",
     choices: [
       {
         "choiceIdentifier" => "com.microsoft.autoupdate", # Office16_all_autoupdate.pkg
@@ -863,10 +842,10 @@ We use a checksum whenever possible.
 
 Some distributions provide a suite of multiple applications, or an application with required data, to be installed together in a subdirectory of `/Applications`.
 
-For these casks, use the `suite` stanza to define the directory containing the application suite. Example (from [sketchup.rb](https://github.com/Homebrew/homebrew-cask/blob/e3495e32b7fb3ed1929b6082a4e3eb6a94d9494f/Casks/sketchup.rb#L12)):
+For these casks, use the `suite` stanza to define the directory containing the application suite. Example (from [racket.rb](https://github.com/Homebrew/homebrew-cask/blob/e65e45e94d27d14a78e1bd02b584b0c89c8f9e8b/Casks/r/racket.rb#L18)):
 
 ```ruby
-suite "SketchUp #{version.csv.first}"
+suite "Racket v#{version}"
 ```
 
 The value of `suite` is never an `.app` bundle, but a plain directory.
@@ -906,9 +885,9 @@ Since `pkg` installers can do arbitrary things, different techniques are needed 
   * `must_succeed:` - set to `false` if the script is allowed to fail
   * `sudo:` - set to `true` if the script needs *sudo*
 * [`pkgutil:`](#uninstall-pkgutil) (string, regexp or array of strings and regexps) - strings or regexps matching bundle IDs of packages to uninstall using `pkgutil`
-* [`delete:`](#uninstall-delete) (string or array) - single-quoted, absolute paths of files or directory trees to remove. Should only be used as a last resort; `pkgutil:` is strongly preferred.
-* **`rmdir:`** (string or array) - single-quoted, absolute paths of directories to remove if empty. Works recursively.
-* [`trash:`](#uninstall-trash) (string or array) - single-quoted, absolute paths of files or directory trees to move to Trash
+* [`delete:`](#uninstall-delete) (string or array) - double-quoted, absolute paths of files or directory trees to remove. Should only be used as a last resort; `pkgutil:` is strongly preferred.
+* **`rmdir:`** (string or array) - double-quoted, absolute paths of directories to remove if empty. Works recursively.
+* [`trash:`](#uninstall-trash) (string or array) - double-quoted, absolute paths of files or directory trees to move to Trash
 
 Each `uninstall` technique is applied according to the order above. The order in which `uninstall` keys appear in the cask file is ignored.
 
@@ -1024,7 +1003,7 @@ IDs inside a kext bundle on disk can be listed using [`list_id_in_kext`](https:/
 
 #### `uninstall` *script*
 
-`uninstall script:` introduces a series of key-value pairs describing a command which will automate completion of the uninstall. Example (from [virtualbox.rb](https://github.com/Homebrew/homebrew-cask/blob/af2f04dd54228b970d241b790d3380f3356cf900/Casks/virtualbox.rb#L55-L61)):
+`uninstall script:` introduces a series of key-value pairs describing a command which will automate completion of the uninstall. Example (from [virtualbox.rb](https://github.com/Homebrew/homebrew-cask/blob/ef9931087f6e101262bf64119166e2d9cec068f0/Casks/v/virtualbox.rb#L55-L61)):
 
 ```ruby
 uninstall script:  {
@@ -1100,23 +1079,23 @@ When a plain URL string is insufficient to fetch a file, additional information 
 | `using:`           | the symbol `:post` is the only legal value
 | `cookies:`         | hash of cookies to be set in the download request
 | `referer:`         | string holding the URL to set as referer in the download request
-| `header:`          | string holding the header to set for the download request
+| `header:`          | string or array of strings holding the header(s) to set for the download request
 | `user_agent:`      | string holding the user agent to set for the download request. Can also be set to the symbol `:fake`, which will use a generic browser-like user agent string. We prefer `:fake` when the server does not require a specific user agent.
 | `data:`            | hash of parameters to be set in the POST request
 
-Example of using `cookies:`: [oracle-jdk-javadoc.rb](https://github.com/Homebrew/homebrew-cask/blob/cba3261569dc582f95f72356bda40ccb11c5809d/Casks/oracle-jdk-javadoc.rb#L5-L8)
+Example of using `cookies:`: [oracle-jdk-javadoc.rb](https://github.com/Homebrew/homebrew-cask/blob/326c44e93aeb8d4dd73acea14a99ae215c75fdd6/Casks/o/oracle-jdk-javadoc.rb#L5-L8)
 
-Example of using `referer:`: [firealpaca.rb](https://github.com/Homebrew/homebrew-cask/blob/37f434b99f51259e642793d65b7490540b71dc21/Casks/firealpaca.rb#L5-L6)
+Example of using `referer:`: [firealpaca.rb](https://github.com/Homebrew/homebrew-cask/blob/c4b3f0742e044ae2a6e114eb6b90068763d0d12b/Casks/f/firealpaca.rb#L5-L6)
 
-Example of using `header:`: [issue-325182724](https://github.com/Homebrew/brew/pull/6545#issue-325182724)
+Example of using `header:`: [issue-325182724](https://github.com/Homebrew/brew/pull/6545#issue-325182724) [issue-15590](https://github.com/Homebrew/brew/issues/15590)
 
 #### When URL and Homepage Domains Differ, Add `verified:`
 
-When the domains of `url` and `homepage` differ, the discrepancy should be documented with the `verified:` parameter, repeating the smallest possible portion of the URL that uniquely identifies the app or vendor, excluding the protocol. (Example: [shotcut.rb](https://github.com/Homebrew/homebrew-cask/blob/3184fb84140296cd16322a707596e1ab3d86c962/Casks/shotcut.rb#L8-L9))
+When the domains of `url` and `homepage` differ, the discrepancy should be documented with the `verified:` parameter, repeating the smallest possible portion of the URL that uniquely identifies the app or vendor, excluding the protocol. (Example: [shotcut.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/s/shotcut.rb#L5-L6))
 
 This must be added so a user auditing the cask knows the URL was verified by the Homebrew Cask team as the one provided by the vendor, even though it may look unofficial. It is our responsibility as Homebrew Cask maintainers to verify both the `url` and `homepage` information when first added (or subsequently modified, apart from versioning).
 
-The parameter doesn’t mean you should trust the source blindly, but we only approve casks in which users can easily verify its authenticity with basic means, such as checking the official homepage or public repository. Occasionally, slightly more elaborate techniques may be used, such as inspecting an [`appcast`](#stanza-appcast) we established as official. Cases where such quick verifications aren’t possible (e.g. when the download URL is behind a registration wall) are [treated in a stricter manner](https://docs.brew.sh/Acceptable-Casks#unofficial-vendorless-and-walled-builds).
+The parameter doesn’t mean you should trust the source blindly, but we only approve casks in which users can easily verify its authenticity with basic means, such as checking the official homepage or public repository. Occasionally, slightly more elaborate techniques may be used, such as inspecting a [`livecheck`](#stanza-livecheck) URL we established as official. Cases where such quick verifications aren’t possible (e.g. when the download URL is behind a registration wall) are [treated in a stricter manner](https://docs.brew.sh/Acceptable-Casks#unofficial-vendorless-and-walled-builds).
 
 #### Difficulty Finding a URL
 
@@ -1146,7 +1125,7 @@ Artifacts also may be distributed via Git repositories. URLs that end in `.git` 
 | `tag:`             | string identifying the Git tag to download
 | `revision:`        | string identifying the Git revision to download
 | `branch:`          | string identifying the Git branch to download
-| `only_path:`       | path within the repository to limit the checkout to. If only a single directory of a large repository is required, using this option can signficantly speed up downloads. If provided, artifact paths are relative to this path.
+| `only_path:`       | path within the repository to limit the checkout to. If only a single directory of a large repository is required, using this option can significantly speed up downloads. If provided, artifact paths are relative to this path.
 
 #### SourceForge/OSDN URLs
 
@@ -1267,7 +1246,7 @@ The special value `:latest` is used when
 * `url` does not contain any version information and there is no way to retrieve
   the version using a `livecheck`, or
 * having a correct value for `version` is too difficult or impractical, even with our automated systems. For example,
-  [chromium.rb](https://github.com/Homebrew/homebrew-cask/blob/f3e9de24ba57d7b1d949132504e581759725d0c5/Casks/chromium.rb#L4)
+  [chromium.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/c/chromium.rb#L4)
   releases multiple versions a day.
 
 ### Stanza: `zap`
@@ -1299,7 +1278,7 @@ brew uninstall --zap --force firefox
 
 The form of the `zap` stanza follows the [`uninstall` stanza](#stanza-uninstall). All the same directives are available. The `trash:` key is preferred over `delete:`.
 
-Example: [dropbox.rb](https://github.com/Homebrew/homebrew-cask/blob/1391cefbe79d469509b882ec825bbb0e4f9d7966/Casks/dropbox.rb#L30-L68)
+Example: [dropbox.rb](https://github.com/Homebrew/homebrew-cask/blob/974a55ade77bb4edc8bbb80ef72eec83ae0e76c0/Casks/d/dropbox.rb#L30-L68)
 
 #### `zap` Creation
 
@@ -1309,7 +1288,7 @@ Manual creation can be facilitated with:
 
 * Some of the developer tools which are already available in Homebrew Cask.
 * `sudo find / -iname "*<search item>*"`
-* An uninstaller tool such as [AppCleaner](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/appcleaner.rb).
+* An uninstaller tool such as [AppCleaner](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/a/appcleaner.rb).
 * Inspection of the usual paths, i.e. `/Library/{'Application Support',LaunchAgents,LaunchDaemons,Frameworks,Logs,Preferences,PrivilegedHelperTools}` and `~/Library/{'Application Support',Caches,Containers,LaunchAgents,Logs,Preferences,'Saved Application State'}`.
 
 ---
@@ -1347,9 +1326,9 @@ Details of software names and brands will inevitably be lost in the conversion t
 
 * Remove `.app` from the end.
 
-* Remove from the end: the string “app”, if the vendor styles the name like “Software App.app”. Exception: when “app” is an inseparable part of the name, without which the name would be inherently nonsensical, as in [whatsapp.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/whatsapp.rb).
+* Remove from the end: the string “app”, if the vendor styles the name like “Software App.app”. Exception: when “app” is an inseparable part of the name, without which the name would be inherently nonsensical, as in [whatsapp.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/whatsapp.rb).
 
-* Remove from the end: version numbers or incremental release designations such as “alpha”, “beta”, or “release candidate”. Strings which distinguish different capabilities or codebases such as “Community Edition” are currently accepted. Exception: when a number is not an incremental release counter, but a differentiator for a different product from a different vendor, as in [kdiff3.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/kdiff3.rb).
+* Remove from the end: version numbers or incremental release designations such as “alpha”, “beta”, or “release candidate”. Strings which distinguish different capabilities or codebases such as “Community Edition” are currently accepted. Exception: when a number is not an incremental release counter, but a differentiator for a different product from a different vendor, as in [kdiff3.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/k/kdiff3.rb).
 
 * If the version number is arranged to occur in the middle of the App name, it should also be removed.
 
@@ -1357,7 +1336,7 @@ Details of software names and brands will inevitably be lost in the conversion t
 
 * Remove from the end: strings such as “Desktop”, “for Desktop”.
 
-* Remove from the end: strings such as “Mac”, “for Mac”, “for OS X”, “macOS”, “for macOS”. These terms are generally added to ported software such as “MAME OS X.app”. Exception: when the software is not a port, and “Mac” is an inseparable part of the name, without which the name would be inherently nonsensical, as in [PlayOnMac.app](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/playonmac.rb).
+* Remove from the end: strings such as “Mac”, “for Mac”, “for OS X”, “macOS”, “for macOS”. These terms are generally added to ported software such as “MAME OS X.app”. Exception: when the software is not a port, and “Mac” is an inseparable part of the name, without which the name would be inherently nonsensical, as in [PlayOnMac.app](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/p/playonmac.rb).
 
 * Remove from the end: hardware designations such as “for x86”, “32-bit”, “ARM”.
 
@@ -1367,7 +1346,7 @@ Details of software names and brands will inevitably be lost in the conversion t
 
 * If the result of that process is a generic term, such as “Macintosh Installer”, try prepending the name of the vendor or developer, followed by a hyphen. If that doesn’t work, then just create the best name you can, based on the vendor’s web page.
 
-* If the result conflicts with the name of an existing cask, make yours unique by prepending the name of the vendor or developer, followed by a hyphen. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/panic-unison.rb).
+* If the result conflicts with the name of an existing cask, make yours unique by prepending the name of the vendor or developer, followed by a hyphen. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/u/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/p/panic-unison.rb).
 
 * Inevitably, there are a small number of exceptions not covered by the rules. Don’t hesitate to [use the forum](https://github.com/orgs/Homebrew/discussions) if you have a problem.
 
@@ -1440,7 +1419,6 @@ Cask taps have naming conventions specific to each tap.
 
 * [Homebrew/cask-versions](https://github.com/Homebrew/homebrew-cask-versions/blob/HEAD/CONTRIBUTING.md#naming-versions-casks)
 * [Homebrew/cask-fonts](https://github.com/Homebrew/homebrew-cask-fonts/blob/HEAD/CONTRIBUTING.md#naming-font-casks)
-* [Homebrew/cask-drivers](https://github.com/Homebrew/homebrew-cask-drivers/blob/HEAD/CONTRIBUTING.md#naming-driver-casks)
 
 ### Special Affixes
 

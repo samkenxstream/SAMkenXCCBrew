@@ -4,8 +4,6 @@
 # Contains shorthand Homebrew utility methods like `ohai`, `opoo`, `odisabled`.
 # TODO: move these out of `Kernel`.
 module Kernel
-  extend T::Sig
-
   def require?(path)
     return false if path.nil?
 
@@ -23,7 +21,7 @@ module Kernel
       Context.current.verbose?
     end
 
-    title = Tty.truncate(title) if $stdout.tty? && !verbose
+    title = Tty.truncate(title.to_s) if $stdout.tty? && !verbose
     Formatter.headline(title, color: :blue)
   end
 
@@ -52,7 +50,7 @@ module Kernel
       Context.current.verbose?
     end
 
-    title = Tty.truncate(title) if $stdout.tty? && !verbose && truncate == :auto
+    title = Tty.truncate(title.to_s) if $stdout.tty? && !verbose && truncate == :auto
     Formatter.headline(title, color: :green)
   end
 
@@ -159,6 +157,7 @@ module Kernel
 
   def odisabled(method, replacement = nil, options = {})
     options = { disable: true, caller: caller }.merge(options)
+    # This odeprecated should stick around indefinitely.
     odeprecated(method, replacement, options)
   end
 
@@ -199,13 +198,13 @@ module Kernel
     if seconds > 59
       minutes = seconds / 60
       seconds %= 60
-      res = +"#{minutes} #{Utils.pluralize("minute", minutes)}"
+      res = +Utils.pluralize("minute", minutes, include_count: true)
       return res.freeze if seconds.zero?
 
       res << " "
     end
 
-    res << "#{seconds} #{Utils.pluralize("second", seconds)}"
+    res << Utils.pluralize("second", seconds, include_count: true)
     res.freeze
   end
 
@@ -320,7 +319,7 @@ module Kernel
 
   # GZips the given paths, and returns the gzipped paths.
   def gzip(*paths)
-    odeprecated "Utils.gzip", "Utils::Gzip.compress"
+    odisabled "Utils.gzip", "Utils::Gzip.compress"
     Utils::Gzip.compress(*paths)
   end
 
@@ -505,13 +504,13 @@ module Kernel
 
   sig { returns(String) }
   def preferred_shell
-    odeprecated "preferred_shell"
+    odisabled "preferred_shell"
     Utils::Shell.preferred_path(default: "/bin/sh")
   end
 
   sig { returns(String) }
   def shell_profile
-    odeprecated "shell_profile"
+    odisabled "shell_profile"
     Utils::Shell.profile
   end
 

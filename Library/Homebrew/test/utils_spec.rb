@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils"
@@ -69,6 +68,12 @@ describe Utils do
       expect(described_class.pluralize("foo", 0, singular: "o", plural: "es")).to eq("fooes")
       expect(described_class.pluralize("foo", 1, singular: "o", plural: "es")).to eq("fooo")
       expect(described_class.pluralize("foo", 2, singular: "o", plural: "es")).to eq("fooes")
+    end
+
+    it "includes the count when requested" do
+      expect(described_class.pluralize("foo", 0, include_count: true)).to eq("0 foos")
+      expect(described_class.pluralize("foo", 1, include_count: true)).to eq("1 foo")
+      expect(described_class.pluralize("foo", 2, include_count: true)).to eq("2 foos")
     end
   end
 

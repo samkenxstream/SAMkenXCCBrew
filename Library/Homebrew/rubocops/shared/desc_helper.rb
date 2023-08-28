@@ -53,8 +53,7 @@ module RuboCop
         desc_problem "Description shouldn't start with an article." if regex_match_group(desc, /^(the|an?)(?=\s)/i)
 
         # Check if invalid lowercase words are at the start of a desc.
-        if !VALID_LOWERCASE_WORDS.include?(string_content(desc).split.first) && # rubocop:disable Style/InverseMethods (false positive)
-           regex_match_group(desc, /^[a-z]/)
+        if !VALID_LOWERCASE_WORDS.include?(string_content(desc).split.first) && regex_match_group(desc, /^[a-z]/)
           desc_problem "Description should start with a capital letter."
         end
 
@@ -74,6 +73,9 @@ module RuboCop
         if regex_match_group(desc, /\.$/) && !string_content(desc).end_with?("etc.")
           desc_problem "Description shouldn't end with a full stop."
         end
+
+        # Check if the desc contains Unicode emojis or symbols (Unicode Other Symbols category).
+        desc_problem "Description shouldn't contain Unicode emojis or symbols." if regex_match_group(desc, /\p{So}/)
 
         # Check if the desc length exceeds maximum length.
         return if desc_length <= MAX_DESC_LENGTH
@@ -104,6 +106,7 @@ module RuboCop
 
           correction.gsub!(/(ommand ?line)/i, "ommand-line")
           correction.gsub!(/(^|[^a-z])#{@name}([^a-z]|$)/i, "\\1\\2")
+          correction.gsub!(/\s?\p{So}/, "")
           correction.gsub!(/^\s+/, "")
           correction.gsub!(/\s+$/, "")
           correction.gsub!(/\.$/, "")

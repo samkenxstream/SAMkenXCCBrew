@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::DSL, :cask do
@@ -20,10 +19,10 @@ describe Cask::DSL, :cask do
       end
     end
 
-    it "prints a warning that it has encountered an unexpected method" do
+    it "prints an error that it has encountered an unexpected method" do
       expected = Regexp.compile(<<~EOS.lines.map(&:chomp).join)
         (?m)
-        Warning:
+        Error:
         .*
         Unexpected method 'future_feature' called on Cask unexpected-method-cask\\.
         .*
@@ -165,7 +164,7 @@ describe Cask::DSL, :cask do
             "zh-CN"
           end
 
-          language "en-US", default: true do
+          language "en", default: true do
             sha256 "xyz789"
             "en-US"
           end
@@ -361,30 +360,6 @@ describe Cask::DSL, :cask do
         it "defaults to `nil` for the other when no arrays are passed" do
           expect(cask.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
         end
-      end
-    end
-  end
-
-  describe "appcast stanza" do
-    let(:token) { "with-appcast" }
-
-    it "allows appcasts to be specified" do
-      expect(cask.appcast.to_s).to match(/^http/)
-    end
-
-    context "when multiple appcasts are defined" do
-      let(:token) { "invalid/invalid-appcast-multiple" }
-
-      it "raises an error" do
-        expect { cask }.to raise_error(Cask::CaskInvalidError, /'appcast' stanza may only appear once/)
-      end
-    end
-
-    context "when appcast URL is invalid" do
-      let(:token) { "invalid/invalid-appcast-url" }
-
-      it "refuses to load" do
-        expect { cask }.to raise_error(Cask::CaskInvalidError)
       end
     end
   end

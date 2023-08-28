@@ -7,8 +7,6 @@ require "cask/caskroom"
 require "dependencies_helpers"
 
 module Homebrew
-  extend T::Sig
-
   extend DependenciesHelpers
 
   sig { returns(CLI::Parser) }
@@ -51,11 +49,11 @@ module Homebrew
       switch "--installed",
              description: "List dependencies for formulae that are currently installed. If <formula> is " \
                           "specified, list only its dependencies that are currently installed."
+      switch "--missing",
+             description: "Show only missing dependencies."
       switch "--eval-all",
              description: "Evaluate all available formulae and casks, whether installed or not, to list " \
                           "their dependencies."
-      switch "--all",
-             hidden:      true
       switch "--for-each",
              description: "Switch into the mode used by the `--all` option, but only list dependencies " \
                           "for each provided <formula>, one formula per line. This is used for " \
@@ -66,6 +64,7 @@ module Homebrew
              description: "Treat all named arguments as casks."
 
       conflicts "--tree", "--graph"
+      conflicts "--installed", "--missing"
       conflicts "--installed", "--eval-all"
       conflicts "--installed", "--all"
       conflicts "--formula", "--cask"
@@ -79,13 +78,6 @@ module Homebrew
     args = deps_args.parse
 
     all = args.eval_all?
-    if args.all?
-      unless all
-        odisabled "brew deps --all",
-                  "brew deps --eval-all or HOMEBREW_EVAL_ALL"
-      end
-      all = true
-    end
 
     Formulary.enable_factory_cache!
 
@@ -190,6 +182,7 @@ module Homebrew
       str = "#{str} [test]" if dep.test?
       str = "#{str} [optional]" if dep.optional?
       str = "#{str} [recommended]" if dep.recommended?
+      str = "#{str} [implicit]" if dep.implicit?
     end
 
     str

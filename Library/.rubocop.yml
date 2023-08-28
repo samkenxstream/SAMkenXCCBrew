@@ -13,7 +13,6 @@ inherit_mode:
 
 AllCops:
   TargetRubyVersion: 2.6
-  DisplayCopNames: false
   ActiveSupportExtensionsEnabled: true
   NewCops: enable
   Include:
@@ -32,10 +31,6 @@ Cask/Desc:
 
 Cask/HomepageUrlTrailingSlash:
   Description: "Ensure that the homepage url has a slash after the domain name."
-  Enabled: true
-
-Cask/NoDslVersion:
-  Description: "Do not use the deprecated DSL version syntax in your cask header."
   Enabled: true
 
 Cask/StanzaGrouping:
@@ -182,28 +177,23 @@ Naming/MethodName:
   AllowedPatterns:
     - '\A(fetch_)?HEAD\?\Z'
 
-# TODO: remove all of these
 Naming/MethodParameterName:
   inherit_mode:
     merge:
       - AllowedNames
-  AllowedNames:
-    [
-      "pr", # TODO: Remove if https://github.com/rubocop/rubocop/pull/11690 is merged or we change the variable names.
-    ]
 
 # Both styles are used depending on context,
 # e.g. `sha256` and `something_countable_1`.
 Naming/VariableNumber:
   Enabled: false
 
-# Does not hinder readability, so might as well enable it.
-Performance/CaseWhenSplat:
-  Enabled: true
-
 # Makes code less readable for minor performance increases.
 Performance/Caller:
   Enabled: false
+
+# Does not hinder readability, so might as well enable it.
+Performance/CaseWhenSplat:
+  Enabled: true
 
 # Makes code less readable for minor performance increases.
 Performance/MethodObjectAsBlock:
@@ -286,20 +276,29 @@ RSpec/Focus:
 Sorbet/ConstantsFromStrings:
   Enabled: false
 
+# This is already the default
 Sorbet/FalseSigil:
+  Enabled: false
+
+# T::Sig is monkey-patched into Module
+Sorbet/RedundantExtendTSig:
+  Enabled: true
+
+Sorbet/StrictSigil:
+  Enabled: true
+  inherit_mode:
+    override:
+      - Include
+  Include:
+    - "**/*.rbi"
+
+Sorbet/TrueSigil:
+  Enabled: true
   Exclude:
     - "Taps/**/*"
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
-    - "Homebrew/test/**/Casks/**/*.rb"
-
-Sorbet/StrictSigil:
-  inherit_mode:
-    override:
-      - Include
-  Enabled: true
-  Include:
-    - "**/*.rbi"
+    - "Homebrew/test/**/*.rb"
 
 # Require &&/|| instead of and/or
 Style/AndOr:
@@ -369,6 +368,14 @@ Style/HashAsLastArrayItem:
     - "Taps/*/*/*.rb"
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
+
+Style/InvertibleUnlessCondition:
+  Enabled: true
+  InverseMethods:
+    # Favor `if a != b` over `unless a == b`
+    :==: :!=
+    # Unset this (prefer `unless a.zero?` over `if a.nonzero?`)
+    :zero?:
 
 # would rather freeze too much than too little
 Style/MutableConstant:

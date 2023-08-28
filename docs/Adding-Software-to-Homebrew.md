@@ -14,7 +14,7 @@ If everything checks out, you're ready to get started on a new formula!
 
 ### Writing the formula
 
-1. It's a good idea to find existing formulae in Homebrew that have similarities to the software you want to add. This will help you to understand how specific languages, build methods, etc. are typically handled.
+1. It's a good idea to find existing formulae in Homebrew that have similarities to the software you want to add. This will help you to understand how specific languages, build methods, etc. are typically handled. Start by tapping `homebrew/core`: first set `HOMEBREW_NO_INSTALL_FROM_API=1` in your shell environment, then run `brew tap homebrew/core` to clone the `homebrew/core` tap to the path returned by `brew --repository homebrew/core`.
 
 1. If you're starting from scratch, you can use the [`brew create` command](Manpage.md#create-options-url) to produce a basic version of your formula. This command accepts a number of options and you may be able to save yourself some work by using an appropriate template option like `--python`.
 
@@ -34,7 +34,7 @@ If you're stuck, ask for help on GitHub or the [Homebrew discussion forum](https
 
 ### Submitting the formula
 
-You're finally ready to submit your formula to the [homebrew-core](https://github.com/Homebrew/homebrew-core) repository. If you haven't done this before, you can refer to the [How to Open a Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for help. Maintainers will review the pull request and provide feedback about any areas that need to be addressed before the formula can be added to Homebrew.
+You're finally ready to submit your formula to the [homebrew-core](https://github.com/Homebrew/homebrew-core) repository. If you haven't done this before, you can refer to the [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for help. Maintainers will review the pull request and provide feedback about any areas that need to be addressed before the formula can be added to Homebrew.
 
 If you've made it this far, congratulations on submitting a Homebrew formula! We appreciate the hard work you put into this and you can take satisfaction in knowing that your work may benefit other Homebrew users as well.
 
@@ -186,7 +186,7 @@ Additional [`artifact` stanzas](Cask-Cookbook.md#at-least-one-artifact-stanza-is
 
 #### Cask token details
 
-If a token conflicts with an already-existing cask, authors should manually make the new token unique by prepending the vendor name. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/panic-unison.rb).
+If a token conflicts with an already-existing cask, authors should manually make the new token unique by prepending the vendor name. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/u/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/p/panic-unison.rb).
 
 If possible, avoid creating tokens that differ only by the placement of hyphens.
 

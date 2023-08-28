@@ -7,8 +7,6 @@ require "api"
 require "os/mac/xcode"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -45,8 +43,8 @@ module Homebrew
       Utils::Bottles.tag
     end
 
-    Homebrew::SimulateSystem.os = @bottle_tag.system
-    Homebrew::SimulateSystem.arch = if Hardware::CPU::INTEL_ARCHS.include?(@bottle_tag.arch)
+    os = @bottle_tag.system
+    arch = if Hardware::CPU::INTEL_ARCHS.include?(@bottle_tag.arch)
       :intel
     elsif Hardware::CPU::ARM_ARCHS.include?(@bottle_tag.arch)
       :arm
@@ -54,46 +52,47 @@ module Homebrew
       raise "Unknown arch #{@bottle_tag.arch}."
     end
 
-    all = args.eval_all?
-    if args.total?
-      if !all && !Homebrew::EnvConfig.eval_all?
-        odisabled "brew unbottled --total", "brew unbottled --total --eval-all or HOMEBREW_EVAL_ALL"
+    Homebrew::SimulateSystem.with os: os, arch: arch do
+      all = args.eval_all?
+      if args.total?
+        if !all && !Homebrew::EnvConfig.eval_all?
+          raise UsageError, "`brew unbottled --total` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
+        end
+
+        all = true
       end
-      all = true
+
+      if args.named.blank?
+        ohai "Getting formulae..."
+      elsif all
+        raise UsageError, "Cannot specify formulae when using `--eval-all`/`--total`."
+      end
+
+      formulae, all_formulae, formula_installs =
+        formulae_all_installs_from_args(args, all)
+      deps_hash, uses_hash = deps_uses_from_formulae(all_formulae)
+
+      if args.dependents?
+        formula_dependents = {}
+        formulae = formulae.sort_by do |f|
+          dependents = uses_hash[f.name]&.length || 0
+          formula_dependents[f.name] ||= dependents
+        end.reverse
+      elsif all
+        output_total(formulae)
+        return
+      end
+
+      noun, hash = if args.named.present?
+        [nil, {}]
+      elsif args.dependents?
+        ["dependents", formula_dependents]
+      else
+        ["installs", formula_installs]
+      end
+
+      output_unbottled(formulae, deps_hash, noun, hash, args.named.present?)
     end
-
-    if args.named.blank?
-      ohai "Getting formulae..."
-    elsif all
-      raise UsageError, "Cannot specify formulae when using `--eval-all`/`--total`."
-    end
-
-    formulae, all_formulae, formula_installs =
-      formulae_all_installs_from_args(args, all)
-    deps_hash, uses_hash = deps_uses_from_formulae(all_formulae)
-
-    if args.dependents?
-      formula_dependents = {}
-      formulae = formulae.sort_by do |f|
-        dependents = uses_hash[f.name]&.length || 0
-        formula_dependents[f.name] ||= dependents
-      end.reverse
-    elsif all
-      output_total(formulae)
-      return
-    end
-
-    noun, hash = if args.named.present?
-      [nil, {}]
-    elsif args.dependents?
-      ["dependents", formula_dependents]
-    else
-      ["installs", formula_installs]
-    end
-
-    output_unbottled(formulae, deps_hash, noun, hash, args.named.present?)
-  ensure
-    Homebrew::SimulateSystem.clear
   end
 
   def formulae_all_installs_from_args(args, all)
@@ -101,8 +100,9 @@ module Homebrew
       formulae = all_formulae = args.named.to_formulae
     elsif args.dependents?
       if !args.eval_all? && !Homebrew::EnvConfig.eval_all?
-        odisabled "brew unbottled --dependents", "brew unbottled --all --dependents or HOMEBREW_EVAL_ALL"
+        raise UsageError, "`brew unbottled --dependents` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
       end
+
       formulae = all_formulae = Formula.all
 
       @sort = " (sorted by number of dependents)"
@@ -202,7 +202,7 @@ module Homebrew
           when MacOSRequirement
             next true unless r.version_specified?
 
-            macos_version.public_send(r.comparator, r.version)
+            macos_version.compare(r.comparator, r.version)
           when XcodeRequirement
             next true unless r.version
 

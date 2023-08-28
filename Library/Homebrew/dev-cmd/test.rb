@@ -7,8 +7,6 @@ require "timeout"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -30,7 +28,7 @@ module Homebrew
       switch "--retry",
              description: "Retry if a testing fails."
 
-      named_args :installed_formula, min: 1
+      named_args :installed_formula, min: 1, without_api: true
     end
   end
 

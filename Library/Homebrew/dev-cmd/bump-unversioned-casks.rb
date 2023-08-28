@@ -10,8 +10,6 @@ require "tap"
 require "unversioned_cask_checker"
 
 module Homebrew
-  extend T::Sig
-
   extend SystemCommand::Mixin
 
   sig { returns(CLI::Parser) }
@@ -27,7 +25,7 @@ module Homebrew
       flag   "--state-file=",
              description: "File for caching state."
 
-      named_args [:cask, :tap], min: 1
+      named_args [:cask, :tap], min: 1, without_api: true
     end
   end
 

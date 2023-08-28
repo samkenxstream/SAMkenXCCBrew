@@ -5,8 +5,6 @@ require "cli/parser"
 require "fileutils"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -26,6 +24,8 @@ module Homebrew
              description: "Enable debugging using byebug."
       switch "--changed",
              description: "Only runs tests on files that were changed from the master branch."
+      switch "--fail-fast",
+             description: "Exit early on the first failing test."
       flag   "--only=",
              description: "Run only <test_script>`_spec.rb`. Appending `:`<line_number> will start at a " \
                           "specific line."
@@ -60,7 +60,6 @@ module Homebrew
 
     ohai "Sending test results to BuildPulse"
 
-    # TODO: make this use `system_command!` when https://github.com/buildpulse/buildpulse-action/issues/4 is fixed
     system_command Formula["buildpulse-test-reporter"].opt_bin/"buildpulse-test-reporter",
                    args: [
                      "submit", "#{HOMEBREW_LIBRARY_PATH}/test/junit",
@@ -89,7 +88,7 @@ module Homebrew
   def tests
     args = tests_args.parse
 
-    Homebrew.install_bundler_gems!
+    Homebrew.install_bundler_gems!(groups: ["prof"])
 
     require "byebug" if args.byebug?
 
@@ -156,6 +155,7 @@ module Homebrew
         --color
         --require spec_helper
       ]
+      bundle_args << "--fail-fast" if args.fail_fast?
 
       # TODO: Refactor and move to extend/os
       # rubocop:disable Homebrew/MoveToExtendOS

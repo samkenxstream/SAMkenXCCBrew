@@ -27,7 +27,7 @@ This can be accomplished by adding a `livecheck` block to the formula/cask/resou
 
 * **Only use `strategy` when it's necessary**. For example, if livecheck is already using the `Git` strategy for a URL, it's not necessary to use `strategy :git`. However, if `Git` applies to a URL but we need to use `PageMatch`, it's necessary to specify `strategy :page_match`.
 
-* **Only use the `GithubLatest` strategy when it's necessary and correct**. GitHub rate-limits requests so we try to minimize our use of this strategy to avoid hitting the rate limit on CI or when using `brew livecheck --tap` on large taps (e.g. `homebrew/core`). The `Git` strategy is often sufficient and we only need to use `GithubLatest` when the "latest" release is different than the newest version from the tags.
+* **Only use the `GithubLatest` and `GithubReleases` strategies when they are necessary and correct**. GitHub rate limits API requests, so we only use these strategies when `Git` isn't sufficient or appropriate. `GithubLatest` should only be used if the upstream repository has a "latest" release for a suitable version and either the formula/cask uses a release asset or the `Git` strategy can't correctly identify the latest release version. `GithubReleases` should only be used if the upstream repository uses releases and both the `Git` and `GithubLatest` strategies aren't suitable.
 
 ### URL guidelines
 
@@ -47,7 +47,7 @@ The `livecheck` block regex restricts matches to a subset of the fetched content
 
 * **Anchor the start/end of the regex, to restrict the scope**. For example, on HTML pages we often match file names or version directories in `href` attribute URLs (e.g. `/href=.*?example[._-]v?(\d+(?:\.\d+)+)\.zip/i`). The general idea is that limiting scope will help exclude unwanted matches.
 
-* **Avoid generic catch-alls like `.*` or `.+`** in favor of something non-greedy and/or contextually appropriate. For example, to match characters within the bounds of an HTML attribute, use `[^"' >]+?`.
+* **Avoid generic catchalls like `.*` or `.+`** in favor of something non-greedy and/or contextually appropriate. For example, to match characters within the bounds of an HTML attribute, use `[^"' >]+?`.
 
 * **Use `[._-]` in place of a period/underscore/hyphen between the software name and version in a file name**. For a file named `example-1.2.3.tar.gz`, `example[._-]v?(\d+(?:\.\d+)+)\.t` will continue matching if the upstream file name format changes to `example_1.2.3.tar.gz` or `example.1.2.3.tar.gz`.
 
@@ -140,6 +140,52 @@ livecheck do
   end
 end
 ```
+
+#### `GithubLatest` `strategy` block
+
+A `strategy` block for `GithubLatest` receives the parsed JSON data from the GitHub API for a repository's "latest" release, along with a regex. When a regex is not provided in a `livecheck` block, the strategy's default regex is passed into the `strategy` block instead.
+
+By default, the strategy matches version text in the release's tag or title but a `strategy` block can be used to check any of the fields in the release JSON. The logic in the following `strategy` block is similar to the default behavior but only checks the release tag instead, for the sake of demonstration:
+
+```ruby
+livecheck do
+  url :stable
+  regex(/^example[._-]v?(\d+(?:\.\d+)+)$/i)
+  strategy :github_latest do |json, regex|
+    match = json["tag_name"]&.match(regex)
+    next if match.blank?
+
+    match[1]
+  end
+end
+```
+
+You can find more information on the response JSON from this API endpoint in the related [GitHub REST API documentation](https://docs.github.com/en/rest/releases/releases?apiVersion=latest#get-the-latest-release).
+
+#### `GithubReleases` `strategy` block
+
+A `strategy` block for `GithubReleases` receives the parsed JSON data from the GitHub API for a repository's most recent releases, along with a regex. When a regex is not provided in a `livecheck` block, the strategy's default regex is passed into the `strategy` block instead.
+
+By default, the strategy matches version text in each release's tag or title but a `strategy` block can be used to check any of the fields in the release JSON. The logic in the following `strategy` block is similar to the default behavior but only checks the release tag instead, for the sake of demonstration:
+
+```ruby
+livecheck do
+  url :stable
+  regex(/^example[._-]v?(\d+(?:\.\d+)+)$/i)
+  strategy :github_releases do |json, regex|
+    json.map do |release|
+      next if release["draft"] || release["prerelease"]
+
+      match = release["tag_name"]&.match(regex)
+      next if match.blank?
+
+      match[1]
+    end
+  end
+end
+```
+
+You can find more information on the response JSON from this API endpoint in the related [GitHub REST API documentation](https://docs.github.com/en/rest/releases/releases?apiVersion=latest#list-releases).
 
 #### `Json` `strategy` block
 

@@ -56,6 +56,12 @@ module RuboCop
             find_method_with_args(method_node, :system, "go", "get") do
               problem "Do not use `go get`. Please ask upstream to implement Go vendoring"
             end
+
+            find_method_with_args(method_node, :system, "cargo", "build") do |m|
+              next if parameters_passed?(m, [/--lib/])
+
+              problem "use \"cargo\", \"install\", *std_cargo_args"
+            end
           end
 
           find_method_with_args(body_node, :system, "dep", "ensure") do |d|
@@ -63,12 +69,6 @@ module RuboCop
             next if @formula_name == "goose" # needed in 2.3.0
 
             problem "use \"dep\", \"ensure\", \"-vendor-only\""
-          end
-
-          find_method_with_args(body_node, :system, "cargo", "build") do |m|
-            next if parameters_passed?(m, [/--lib/])
-
-            problem "use \"cargo\", \"install\", *std_cargo_args"
           end
 
           find_every_method_call_by_name(body_node, :system).each do |m|
@@ -128,7 +128,7 @@ module RuboCop
             problem "Use `\#{pkgshare}` instead of `\#{share}/#{@formula_name}`"
           end
 
-          return unless formula_tap == "homebrew-core"
+          return if formula_tap != "homebrew-core"
 
           find_method_with_args(body_node, :env, :std) do
             problem "`env :std` in homebrew/core formulae is deprecated"

@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -588,6 +587,49 @@ describe Homebrew::Service do
       EOS
       expect(plist).to eq(plist_expect)
     end
+
+    it "expands paths" do
+      f = stub_formula do
+        service do
+          run [opt_sbin/"sleepwatcher", "-V", "-s", "~/.sleep", "-w", "~/.wakeup"]
+          working_dir "~"
+        end
+      end
+
+      plist = f.service.to_plist
+      plist_expect = <<~EOS
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+        \t<key>Label</key>
+        \t<string>homebrew.mxcl.formula_name</string>
+        \t<key>LimitLoadToSessionType</key>
+        \t<array>
+        \t\t<string>Aqua</string>
+        \t\t<string>Background</string>
+        \t\t<string>LoginWindow</string>
+        \t\t<string>StandardIO</string>
+        \t\t<string>System</string>
+        \t</array>
+        \t<key>ProgramArguments</key>
+        \t<array>
+        \t\t<string>#{HOMEBREW_PREFIX}/opt/formula_name/sbin/sleepwatcher</string>
+        \t\t<string>-V</string>
+        \t\t<string>-s</string>
+        \t\t<string>#{Dir.home}/.sleep</string>
+        \t\t<string>-w</string>
+        \t\t<string>#{Dir.home}/.wakeup</string>
+        \t</array>
+        \t<key>RunAtLoad</key>
+        \t<true/>
+        \t<key>WorkingDirectory</key>
+        \t<string>#{Dir.home}</string>
+        </dict>
+        </plist>
+      EOS
+      expect(plist).to eq(plist_expect)
+    end
   end
 
   describe "#to_systemd_unit" do
@@ -655,6 +697,30 @@ describe Homebrew::Service do
         [Service]
         Type=oneshot
         ExecStart=#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd
+      EOS
+      expect(unit).to eq(unit_expect.strip)
+    end
+
+    it "expands paths" do
+      f = stub_formula do
+        service do
+          run opt_bin/"beanstalkd"
+          working_dir "~"
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~EOS
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart=#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd
+        WorkingDirectory=#{Dir.home}
       EOS
       expect(unit).to eq(unit_expect.strip)
     end
@@ -911,6 +977,109 @@ describe Homebrew::Service do
 
       command = f.service.command
       expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test", "macos"])
+    end
+  end
+
+  describe "#serialize" do
+    let(:serialized_hash) do
+      {
+        environment_variables: {
+          PATH: "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:/usr/bin:/bin:/usr/sbin:/sbin",
+        },
+        run:                   [Pathname("$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd"), "test"],
+        run_type:              :immediate,
+        working_dir:           "/$HOME",
+        cron:                  "0 0 * * 0",
+        sockets:               "tcp://0.0.0.0:80",
+      }
+    end
+
+    # @note The calls to `Formula.generating_hash!` and `Formula.generated_hash!`
+    #   are not idempotent so they can only be used in one test.
+    it "replaces local paths with placeholders" do
+      f = stub_formula do
+        service do
+          run [opt_bin/"beanstalkd", "test"]
+          environment_variables PATH: std_service_path_env
+          working_dir Dir.home
+          cron "@weekly"
+          sockets "tcp://0.0.0.0:80"
+        end
+      end
+
+      Formula.generating_hash!
+      expect(f.service.serialize).to eq(serialized_hash)
+      Formula.generated_hash!
+    end
+  end
+
+  describe ".deserialize" do
+    let(:serialized_hash) do
+      {
+        "name"                  => {
+          "linux" => "custom.systemd.name",
+          "macos" => "custom.launchd.name",
+        },
+        "environment_variables" => {
+          "PATH" => "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:/usr/bin:/bin:/usr/sbin:/sbin",
+        },
+        "run"                   => ["$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd", "test"],
+        "run_type"              => "immediate",
+        "working_dir"           => HOMEBREW_HOME_PLACEHOLDER,
+        "keep_alive"            => { "successful_exit" => false },
+      }
+    end
+
+    let(:deserialized_hash) do
+      {
+        name:                  {
+          linux: "custom.systemd.name",
+          macos: "custom.launchd.name",
+        },
+        environment_variables: {
+          PATH: "#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin",
+        },
+        run:                   ["#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd", "test"],
+        run_type:              :immediate,
+        working_dir:           Dir.home,
+        keep_alive:            { successful_exit: false },
+      }
+    end
+
+    it "replaces placeholders with local paths" do
+      expect(described_class.deserialize(serialized_hash)).to eq(deserialized_hash)
+    end
+
+    describe "run command" do
+      it "handles String argument correctly" do
+        expect(described_class.deserialize({
+          "run" => "$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd",
+        })).to eq({
+          run: "#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd",
+        })
+      end
+
+      it "handles Array argument correctly" do
+        expect(described_class.deserialize({
+          "run" => ["$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd", "--option"],
+        })).to eq({
+          run: ["#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd", "--option"],
+        })
+      end
+
+      it "handles Hash argument correctly" do
+        expect(described_class.deserialize({
+          "run" => {
+            "linux" => "$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd",
+            "macos" => ["$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd", "--option"],
+          },
+        })).to eq({
+          run: {
+            linux: "#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd",
+            macos: ["#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd", "--option"],
+          },
+        })
+      end
     end
   end
 end

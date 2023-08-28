@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 module Superenv
-  extend T::Sig
-
   class << self
     # The location of Homebrew's shims on macOS.
     def shims_path
@@ -131,9 +129,18 @@ module Superenv
     # Notably, Xcode 10.2 fixes issues where ZERO_AR_DATE affected file mtimes.
     # Xcode 11.0 contains fixes for lldb reading things built with ZERO_AR_DATE.
     self["ZERO_AR_DATE"] = "1" if MacOS::Xcode.version >= "11.0" || MacOS::CLT.version >= "11.0"
+
+    # Pass `-no_fixup_chains` whenever the linker is invoked with `-undefined dynamic_lookup`.
+    # See: https://github.com/python/cpython/issues/97524
+    #      https://github.com/pybind/pybind11/pull/4301
+    no_fixup_chains
   end
 
   def no_weak_imports
     append_to_cccfg "w" if no_weak_imports_support?
+  end
+
+  def no_fixup_chains
+    append_to_cccfg "f" if no_fixup_chains_support?
   end
 end

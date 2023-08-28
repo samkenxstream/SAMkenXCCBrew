@@ -9,8 +9,6 @@ require "extend/cachable"
 
 # Rather than calling `new` directly, use one of the class methods like {Tab.create}.
 class Tab
-  extend T::Sig
-
   extend Cachable
 
   FILENAME = "INSTALL_RECEIPT.json"
@@ -47,8 +45,8 @@ class Tab
         "tap_git_head" => nil, # Filled in later if possible
         "spec"         => formula.active_spec_sym.to_s,
         "versions"     => {
-          "stable"         => formula.stable&.version.to_s,
-          "head"           => formula.head&.version.to_s,
+          "stable"         => formula.stable&.version&.to_s,
+          "head"           => formula.head&.version&.to_s,
           "version_scheme" => formula.version_scheme,
         },
       },
@@ -108,6 +106,11 @@ class Tab
         "head"           => nil,
         "version_scheme" => 0,
       }
+    end
+
+    # Tabs created with Homebrew 1.5.13 through 4.0.17 inclusive created empty string versions in some cases.
+    ["stable", "head"].each do |spec|
+      attributes["source"]["versions"][spec] = attributes["source"]["versions"][spec].presence
     end
 
     new(attributes)
@@ -173,8 +176,8 @@ class Tab
         "tap"      => formula.tap&.name,
         "spec"     => formula.active_spec_sym.to_s,
         "versions" => {
-          "stable"         => formula.stable&.version.to_s,
-          "head"           => formula.head&.version.to_s,
+          "stable"         => formula.stable&.version&.to_s,
+          "head"           => formula.head&.version&.to_s,
           "version_scheme" => formula.version_scheme,
         },
       }
@@ -281,7 +284,7 @@ class Tab
   def runtime_dependencies
     # Homebrew versions prior to 1.1.6 generated incorrect runtime dependency
     # lists.
-    @runtime_dependencies unless parsed_homebrew_version < "1.1.6"
+    @runtime_dependencies if parsed_homebrew_version >= "1.1.6"
   end
 
   def cxxstdlib
@@ -317,11 +320,11 @@ class Tab
   end
 
   def stable_version
-    Version.create(versions["stable"]) if versions["stable"]
+    versions["stable"]&.then(&Version.method(:new))
   end
 
   def head_version
-    Version.create(versions["head"]) if versions["head"]
+    versions["head"]&.then(&Version.method(:new))
   end
 
   def version_scheme

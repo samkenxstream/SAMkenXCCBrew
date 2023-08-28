@@ -24,7 +24,6 @@ require "extend/kernel"
 
 module Homebrew
   extend Context
-  extend T::Sig
 
   def self._system(cmd, *args, **options)
     pid = fork do
@@ -87,8 +86,6 @@ module Homebrew
 end
 
 module Utils
-  extend T::Sig
-
   # Removes the rightmost segment from the constant expression in the string.
   #
   #   deconstantize('Net::HTTP')   # => "Net"
@@ -126,10 +123,14 @@ module Utils
 
   # A lightweight alternative to `ActiveSupport::Inflector.pluralize`:
   # Combines `stem` with the `singular` or `plural` suffix based on `count`.
-  sig { params(stem: String, count: Integer, plural: String, singular: String).returns(String) }
-  def self.pluralize(stem, count, plural: "s", singular: "")
+  # Adds a prefix of the count value if `include_count` is set to true.
+  sig {
+    params(stem: String, count: Integer, plural: String, singular: String, include_count: T::Boolean).returns(String)
+  }
+  def self.pluralize(stem, count, plural: "s", singular: "", include_count: false)
+    prefix = include_count ? "#{count} " : ""
     suffix = (count == 1) ? singular : plural
-    "#{stem}#{suffix}"
+    "#{prefix}#{stem}#{suffix}"
   end
 
   sig { params(author: String).returns({ email: String, name: String }) }

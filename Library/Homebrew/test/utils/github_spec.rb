@@ -1,20 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/github"
 
 describe GitHub do
-  describe "::search_code", :needs_network do
-    it "queries GitHub code with the passed parameters" do
-      results = described_class.search_code(repo: "Homebrew/brew", path: "/",
-                                            filename: "readme", extension: "md")
-
-      expect(results.count).to eq(1)
-      expect(results.first["name"]).to eq("README.md")
-      expect(results.first["path"]).to eq("README.md")
-    end
-  end
-
   describe "::search_query_string" do
     it "builds a query with the given hash parameters formatted as key:value" do
       query = described_class.search_query_string(user: "Homebrew", repo: "brew")
@@ -69,16 +57,18 @@ describe GitHub do
     it "fails to find artifacts that don't exist" do
       expect do
         described_class.get_artifact_url(
-          described_class.get_workflow_run("Homebrew", "homebrew-core", "79751", artifact_name: "false_bottles"),
+          described_class.get_workflow_run("Homebrew", "homebrew-core", "135608",
+                                           workflow_id: "triage.yml", artifact_name: "false_artifact"),
         )
       end.to raise_error(/No artifact .+ was found/)
     end
 
     it "gets an artifact link" do
       url = described_class.get_artifact_url(
-        described_class.get_workflow_run("Homebrew", "homebrew-core", "79751", artifact_name: "bottles"),
+        described_class.get_workflow_run("Homebrew", "homebrew-core", "135608",
+                                         workflow_id: "triage.yml", artifact_name: "event_payload"),
       )
-      expect(url).to eq("https://api.github.com/repos/Homebrew/homebrew-core/actions/artifacts/70494047/zip")
+      expect(url).to eq("https://api.github.com/repos/Homebrew/homebrew-core/actions/artifacts/781984175/zip")
     end
   end
 

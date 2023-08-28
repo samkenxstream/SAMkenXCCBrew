@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -7,7 +6,7 @@ require "utils/bottles"
 
 describe Formulary do
   let(:formula_name) { "testball_bottle" }
-  let(:formula_path) { CoreTap.new.formula_dir/"#{formula_name}.rb" }
+  let(:formula_path) { CoreTap.new.new_formula_path(formula_name) }
   let(:formula_content) do
     <<~RUBY
       class #{described_class.class_s(formula_name)} < Formula
@@ -16,7 +15,7 @@ describe Formulary do
 
         bottle do
           root_url "file://#{bottle_dir}"
-          sha256 cellar: :any_skip_relocation, #{Utils::Bottles.tag}: "8f9aecd233463da6a4ea55f5f88fc5841718c013f3e2a7941350d6130f1dc149"
+          sha256 cellar: :any_skip_relocation, #{Utils::Bottles.tag}: "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
         end
 
         def install
@@ -78,14 +77,18 @@ describe Formulary do
     it "raises an error if ref is nil" do
       expect do
         described_class.factory(nil)
-      end.to raise_error(ArgumentError)
+      end.to raise_error(TypeError)
     end
 
     context "with sharded Formula directory" do
       before { CoreTap.instance.clear_cache }
 
       let(:formula_name) { "testball_sharded" }
-      let(:formula_path) { CoreTap.new.formula_dir/formula_name[0]/"#{formula_name}.rb" }
+      let(:formula_path) do
+        core_tap = CoreTap.new
+        (core_tap.formula_dir/formula_name[0]).mkpath
+        core_tap.new_formula_path(formula_name)
+      end
 
       it "returns a Formula" do
         expect(described_class.factory(formula_name)).to be_a(Formula)
@@ -244,7 +247,7 @@ describe Formulary do
                   Utils::Bottles.tag.to_s => {
                     "cellar" => ":any",
                     "url"    => "file://#{bottle_dir}/#{formula_name}",
-                    "sha256" => "8f9aecd233463da6a4ea55f5f88fc5841718c013f3e2a7941350d6130f1dc149",
+                    "sha256" => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97",
                   },
                 },
               },
@@ -271,7 +274,13 @@ describe Formulary do
             "conflicts_with"           => ["conflicting_formula"],
             "conflicts_with_reasons"   => ["it does"],
             "link_overwrite"           => ["bin/abc"],
-            "caveats"                  => "example caveat string",
+            "caveats"                  => "example caveat string\n/$HOME\n$HOMEBREW_PREFIX",
+            "service"                  => {
+              "name"        => { macos: "custom.launchd.name", linux: "custom.systemd.name" },
+              "run"         => ["$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd", "test"],
+              "run_type"    => "immediate",
+              "working_dir" => "/$HOME",
+            },
           }.merge(extra_items),
         }
       end
@@ -335,12 +344,12 @@ describe Formulary do
         expect(formula).to be_a(Formula)
 
         expect(formula.keg_only_reason.reason).to eq :provided_by_macos
+        expect(formula.declared_deps.count).to eq 6
         if OS.mac?
           expect(formula.deps.count).to eq 5
         else
           expect(formula.deps.count).to eq 6
         end
-        expect(formula.uses_from_macos_elements).to eq ["uses_from_macos_dep"]
 
         expect(formula.requirements.count).to eq 1
         req = formula.requirements.first
@@ -352,7 +361,14 @@ describe Formulary do
         expect(formula.conflicts.map(&:reason)).to include "it does"
         expect(formula.class.link_overwrite_paths).to include "bin/abc"
 
-        expect(formula.caveats).to eq "example caveat string"
+        expect(formula.caveats).to eq "example caveat string\n#{Dir.home}\n#{HOMEBREW_PREFIX}"
+
+        expect(formula).to be_a_service
+        expect(formula.service.command).to eq(["#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd", "test"])
+        expect(formula.service.run_type).to eq(:immediate)
+        expect(formula.service.working_dir).to eq(Dir.home)
+        expect(formula.plist_name).to eq("custom.launchd.name")
+        expect(formula.service_name).to eq("custom.systemd.name")
 
         expect do
           formula.install
@@ -386,6 +402,7 @@ describe Formulary do
 
         formula = described_class.factory(formula_name)
         expect(formula).to be_a(Formula)
+        expect(formula.declared_deps.count).to eq 7
         expect(formula.deps.count).to eq 6
         expect(formula.deps.map(&:name).include?("variations_dep")).to be true
         expect(formula.deps.map(&:name).include?("uses_from_macos_dep")).to be false
@@ -397,6 +414,7 @@ describe Formulary do
 
         formula = described_class.factory(formula_name)
         expect(formula).to be_a(Formula)
+        expect(formula.declared_deps.count).to eq 6
         expect(formula.deps.count).to eq 6
         expect(formula.deps.map(&:name).include?("uses_from_macos_dep")).to be true
       end
@@ -407,6 +425,7 @@ describe Formulary do
 
         formula = described_class.factory(formula_name)
         expect(formula).to be_a(Formula)
+        expect(formula.declared_deps.count).to eq 6
         expect(formula.deps.count).to eq 5
         expect(formula.deps.map(&:name).include?("uses_from_macos_dep")).to be true
       end

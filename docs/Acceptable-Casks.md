@@ -21,7 +21,6 @@ We maintain separate taps for different types of binaries. Our nomenclature is:
 * **Vendorless**: A binary distributed via means other than an official website, like a forum posting.
 * **Walled**: When the download URL is both behind a login/registration form and from a host that differs from the homepage.
 * **Font**: Data file containing a set of glyphs, characters, or symbols, that changes typed text.
-* **Driver**: Software to make a hardware peripheral recognisable and usable by the system. If the software is useless without the peripheral, it’s considered a driver.
 
 ### Stable versions
 
@@ -29,7 +28,7 @@ Stable versions live in the main repository at [Homebrew/homebrew-cask](https://
 
 #### But there is no Stable version!
 
-When software is only available as a beta, development, or unstable version, its cask can go in the main repo. When stable versions become available, only those will be accepted as subsequent updates.
+When software is only available as a beta, development, or unstable version, its cask can go in the main homebrew-cask repository. When stable versions become available, only those will be accepted as subsequent updates.
 
 ### Beta, Unstable, Development, Nightly, or Legacy
 
@@ -58,11 +57,7 @@ We do not accept these casks since they involve a higher-than-normal security ri
 
 ### Fonts
 
-Font casks live in the [Homebrew/homebrew-cask-fonts](https://github.com/Homebrew/homebrew-cask-fonts) repository. See the fonts repo [CONTRIBUTING.md](https://github.com/Homebrew/homebrew-cask-fonts/blob/HEAD/CONTRIBUTING.md) for details.
-
-### Drivers
-
-Driver casks live in the [Homebrew/homebrew-cask-drivers](https://github.com/Homebrew/homebrew-cask-drivers) repository. See the drivers repo [CONTRIBUTING.md](https://github.com/Homebrew/homebrew-cask-drivers/blob/master/CONTRIBUTING.md) for details.
+Font casks live in the [Homebrew/homebrew-cask-fonts](https://github.com/Homebrew/homebrew-cask-fonts) repository. See the homebrew-cask-fonts repository [CONTRIBUTING.md](https://github.com/Homebrew/homebrew-cask-fonts/blob/HEAD/CONTRIBUTING.md) for details.
 
 ## Apps that bundle malware
 
@@ -74,7 +69,7 @@ If an app that bundles malware was not signed with an Apple Developer ID and you
 
 We are also open to removing casks where we feel there is enough evidence that the app is malicious. To suggest a cask for removal, submit a pull request to delete it along with your reasoning. Typically, this will mean presenting a [VirusTotal](https://www.virustotal.com) scan of the app showing it is malicious, ideally with some other reporting indicating it’s not a false positive.
 
-Likewise, software which provides both “clean” and malware-infested versions might be removed from the repo—even if we could have access to the *good* version—if its developers push for users to install the *bad* version. We do so because in these cases there’s a higher than normal risk that both versions are (or will soon become) compromised in some manner.
+Likewise, software which provides both “clean” and malware-infested versions might be removed from the repository; even if we could have access to the *good* version—if its developers push for users to install the *bad* version. We do so because in these cases there’s a higher than normal risk that both versions are (or will soon become) compromised in some manner.
 
 If a cask you depend on was removed due to these rules, fear not. Removal of a cask from the official repositories means we won’t support it, but you can do so by [hosting your own tap](How-to-Create-and-Maintain-a-Tap.md).
 
@@ -123,9 +118,9 @@ Common reasons to reject a cask entirely:
 * App installer is a `pkg` that requires [`allow_untrusted: true`](https://docs.brew.sh/Cask-Cookbook#pkg-allow_untrusted).
 * App fails with GateKeeper enabled on Homebrew supported macOS versions and platforms (e.g. unsigned apps fail on Macs with Apple silicon/ARM).
 
-Common reasons to reject a cask from the main repo:
+Common reasons to reject a cask from the main homebrew-cask repository:
 
-* Cask was submitted to the wrong repo. When drafting a cask, consult [Finding a Home For Your Cask](#finding-a-home-for-your-cask) to see where it belongs.
+* Cask was submitted to the wrong repository. When drafting a cask, consult [Finding a Home For Your Cask](#finding-a-home-for-your-cask) to see where it belongs.
 
 ### No cask is guaranteed to be accepted
 

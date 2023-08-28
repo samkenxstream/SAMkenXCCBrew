@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "mutex_m"
@@ -28,8 +28,6 @@ module Debrew
 
   # Module for displaying a debugging menu.
   class Menu
-    extend T::Sig
-
     Entry = Struct.new(:name, :action)
 
     attr_accessor :prompt, :entries
@@ -47,7 +45,7 @@ module Debrew
       menu = new
       yield menu
 
-      choice = nil
+      choice = T.let(nil, T.nilable(Entry))
       while choice.nil?
         menu.entries.each_with_index { |e, i| puts "#{i + 1}. #{e.name}" }
         print menu.prompt unless menu.prompt.nil?
@@ -90,7 +88,7 @@ module Debrew
       yield
     rescue SystemExit
       raise
-    rescue Exception => e # rubocop:disable Lint/RescueException
+    rescue Ignorable::ExceptionMixin => e
       e.ignore if debug(e) == :ignore # execution jumps back to where the exception was thrown
     ensure
       Ignorable.unhook_raise
@@ -99,10 +97,10 @@ module Debrew
   end
 
   def self.debug(exception)
-    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !try_lock
+    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !mu_try_lock
 
     begin
-      puts exception.backtrace.first.to_s
+      puts exception.backtrace.first
       puts Formatter.error(exception, label: exception.class.name)
 
       loop do
@@ -119,7 +117,7 @@ module Debrew
               set_trace_func proc { |event, _, _, id, binding, klass|
                 if klass == Object && id == :raise && event == "return"
                   set_trace_func(nil)
-                  synchronize { IRB.start_within(binding) }
+                  mu_synchronize { IRB.start_within(binding) }
                 end
               }
 
@@ -134,7 +132,7 @@ module Debrew
         end
       end
     ensure
-      unlock
+      mu_unlock
     end
   end
 end

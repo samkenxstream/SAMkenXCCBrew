@@ -12,8 +12,6 @@ require "dependencies_helpers"
 require "ostruct"
 
 module Homebrew
-  extend T::Sig
-
   extend DependenciesHelpers
 
   sig { returns(CLI::Parser) }
@@ -29,11 +27,11 @@ module Homebrew
              description: "Resolve more than one level of dependencies."
       switch "--installed",
              description: "Only list formulae and casks that are currently installed."
+      switch "--missing",
+             description: "Only list formulae and casks that are not currently installed."
       switch "--eval-all",
              description: "Evaluate all available formulae and casks, whether installed or not, to show " \
                           "their dependents."
-      switch "--all",
-             hidden: true
       switch "--include-build",
              description: "Include all formulae that specify <formula> as `:build` type dependency."
       switch "--include-test",
@@ -49,6 +47,7 @@ module Homebrew
 
       conflicts "--formula", "--cask"
       conflicts "--installed", "--all"
+      conflicts "--missing", "--installed"
 
       named_args :formula, min: 1
     end
@@ -109,17 +108,11 @@ module Homebrew
       deps
     else
       all = args.eval_all?
-      if args.all?
-        unless all
-          odisabled "brew uses --all",
-                    "brew uses --eval-all or HOMEBREW_EVAL_ALL"
-        end
-        all = true
-      end
 
       if !args.installed? && !(all || Homebrew::EnvConfig.eval_all?)
-        odisabled "brew uses", "brew uses --eval-all or HOMEBREW_EVAL_ALL"
+        raise UsageError, "`brew uses` needs `--installed` or `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
       end
+
       if show_formulae_and_casks || args.formula?
         deps += args.installed? ? Formula.installed : Formula.all
       end

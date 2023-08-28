@@ -12,8 +12,6 @@ require "build_environment"
 #
 # @api private
 class Requirement
-  extend T::Sig
-
   include Dependable
   extend Cachable
 
@@ -164,8 +162,6 @@ class Requirement
   end
 
   class << self
-    extend T::Sig
-
     include BuildEnvironment::DSL
 
     attr_reader :env_proc, :build
@@ -223,7 +219,7 @@ class Requirement
     # `[dependent, req]` pairs to allow callers to apply arbitrary filters to
     # the list.
     # The default filter, which is applied when a block is not given, omits
-    # optionals and recommendeds based on what the dependent has asked for.
+    # optionals and recommends based on what the dependent has asked for.
     def expand(dependent, cache_key: nil, &block)
       if cache_key.present?
         cache[cache_key] ||= {}
